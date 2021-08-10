@@ -160,8 +160,11 @@ export default class GameController {
         if (this.gamePlay.getPossibleMove(this.selectedIndex, this.selectedPlayer.character.attackRadius).includes(index)) {
           this.attack(index, this.selectedPlayer, target);
         }
-        // setTimeout(this.computerAction(), 2000); // ошибка?
-        this.checkGameState();
+        setTimeout(() => {
+          this.computerAction();
+          this.checkGameState();
+        }, 1000);
+        
       }
     } else if (this.selectedPlayer !== undefined && this.gamePlay.getPossibleMove(this.selectedIndex, this.selectedPlayer.character.distance).includes(index)) { // перемещение
       this.gamePlay.deselectCell(this.selectedIndex);
@@ -169,7 +172,9 @@ export default class GameController {
       this.selectedPlayer.position = index;
       this.gamePlay.redrawPositions(playerTeam.team.concat(computerTeam.team));
       this.selectedPlayer = undefined;
-      setTimeout(this.computerAction(), 2000);
+      setTimeout(() => {
+        this.computerAction();
+      }, 1000);
     }
   }
 
@@ -236,13 +241,12 @@ export default class GameController {
     this.selectedPlayer = undefined;
     this.selectedIndex = null;
     this.gamePlay.showDamage(index, damage).then(() => {
-      this.computerAction(); // ? не работает в oncellclick, но работает здесь
       this.checkGameState();
       this.gamePlay.redrawPositions(playerTeam.team.concat(computerTeam.team));
     });
   }
 
-  computerAction() {
+  async computerAction() {
     const random = Math.floor(Math.random() * computerTeam.team.length);
     const activePlayer = computerTeam.team[random];
 
@@ -252,7 +256,7 @@ export default class GameController {
       computerTeam.team.forEach((element) => occupPositions.push(element.position));
 
       let moveDistance = this.gamePlay.getPossibleMove(activePlayer.position, activePlayer.character.distance);
-      moveDistance = moveDistance.filter((number) => occupPositions.includes(number) === false); // не работает?
+      let move = moveDistance.filter((number) => occupPositions.includes(number) === false); // не работает?
 
       const attackDistance = this.gamePlay.getPossibleMove(activePlayer.position, activePlayer.character.attackRadius);
 
@@ -269,7 +273,7 @@ export default class GameController {
           return;
         }
         // ход
-        activePlayer.position = Math.floor(Math.random() * moveDistance.length);
+        activePlayer.position = Math.floor(Math.random() * move.length);
         this.gamePlay.redrawPositions(playerTeam.team.concat(computerTeam.team));
         return;
       }
