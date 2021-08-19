@@ -1,3 +1,5 @@
+/* eslint-disable array-callback-return */
+/* eslint-disable consistent-return */
 /* eslint-disable no-restricted-syntax */
 import themes from './themes';
 import {
@@ -159,12 +161,12 @@ export default class GameController {
         const target = computerTeam.team.find((element) => element.position === index);
         if (this.gamePlay.getPossibleMove(this.selectedIndex, this.selectedPlayer.character.attackRadius).includes(index)) {
           this.attack(index, this.selectedPlayer, target);
+          this.gamePlay.deselectCell(index);
         }
         setTimeout(() => {
           this.computerAction();
           this.checkGameState();
-        }, 1000);
-        
+        }, 800);
       }
     } else if (this.selectedPlayer !== undefined && this.gamePlay.getPossibleMove(this.selectedIndex, this.selectedPlayer.character.distance).includes(index)) { // перемещение
       this.gamePlay.deselectCell(this.selectedIndex);
@@ -174,7 +176,7 @@ export default class GameController {
       this.selectedPlayer = undefined;
       setTimeout(() => {
         this.computerAction();
-      }, 1000);
+      }, 800);
     }
   }
 
@@ -236,6 +238,7 @@ export default class GameController {
     if (target.character.health <= 0) {
       target.character.health = 0;
       computerTeam.team = computerTeam.team.filter((element) => element.position !== index);
+      playerTeam.team = playerTeam.team.filter((element) => element.position !== index);
     }
     if (this.selectedIndex !== null) this.gamePlay.deselectCell(this.selectedIndex);
     this.selectedPlayer = undefined;
@@ -247,42 +250,64 @@ export default class GameController {
   }
 
   async computerAction() {
-    const random = Math.floor(Math.random() * computerTeam.team.length);
-    const activePlayer = computerTeam.team[random];
+    let rivalsPairs = computerTeam.team.map((enemyChar) => {
+      const target = playerTeam.team.reduce((acc, userChar) => {
+        const attackRange = this.gamePlay.getPossibleMove(enemyChar.position, enemyChar.character.attackRadius);
+        if (attackRange.includes(userChar.position)) {
+          acc = userChar;
+          return acc;
+        }
+      });
+      return [
+        enemyChar,
+        target,
+      ];
+    });
 
-    if (activePlayer) {
+    rivalsPairs = rivalsPairs.filter((pair) => !pair.includes(undefined));
+
+    if (rivalsPairs.length !== 0) {
+      // attack
+      if (rivalsPairs.length > 1) {
+        rivalsPairs.sort((a, b) => {
+          const damageA = Math.max(
+            a[0].character.attack - a[1].character.defence,
+            a[0].character.attack * 0.1,
+          );
+          const damageB = Math.max(
+            b[0].character.attack - b[1].character.defence,
+            b[0].character.attack * 0.1,
+          );
+          let value = 0;
+          if (damageA > damageB) {
+            value = -1;
+          }
+          return value;
+        });
+      }
+
+      [[this.selectedCharacter, this.chosenCharacter]] = rivalsPairs;
+      this.attack(this.chosenCharacter.position, this.selectedCharacter, this.chosenCharacter);
+    } else { // moving
       const occupPositions = [];
       playerTeam.team.forEach((element) => occupPositions.push(element.position));
       computerTeam.team.forEach((element) => occupPositions.push(element.position));
 
-      let moveDistance = this.gamePlay.getPossibleMove(activePlayer.position, activePlayer.character.distance);
-      let move = moveDistance.filter((number) => occupPositions.includes(number) === false); // не работает?
+      const activePlayer = computerTeam.team[
+        Math.floor(Math.random() * computerTeam.team.length)
+      ];
 
-      const attackDistance = this.gamePlay.getPossibleMove(activePlayer.position, activePlayer.character.attackRadius);
-
-      for (const player of playerTeam.team) {
-        // атака, если доступна
-        if (attackDistance.includes(player.position)) {
-          this.attack(player.position, activePlayer, player);
-          if (player.character.health <= 0) {
-            player.character.health = 0;
-            playerTeam.team = playerTeam.team.filter((element) => element.character.health > 0);
-            this.gamePlay.redrawPositions(playerTeam.team.concat(computerTeam.team));
-            this.checkGameState();
-          }
-          return;
-        }
-        // ход
-        activePlayer.position = Math.floor(Math.random() * move.length);
-        this.gamePlay.redrawPositions(playerTeam.team.concat(computerTeam.team));
-        return;
-      }
+      const moveRange = this.gamePlay.getPossibleMove(activePlayer.position, activePlayer.character.distance);
+      do {
+        activePlayer.position = moveRange[Math.floor(Math.random() * moveRange.length)];
+      } while (occupPositions.includes(activePlayer.position));
+      this.gamePlay.redrawPositions(playerTeam.team.concat(computerTeam.team));
     }
   }
 
   static levelUp() {
     playerTeam.team.forEach((player) => {
-      player.character.attack = Math.max(player.character.attack, (player.character.attack * (1.8 - player.character.health)) / 100); // ?
+      player.character.attack = Math.max(player.character.attack, (player.character.attack * (1.8 - player.character.health)) / 100);
       player.character.level += 1;
       player.character.health += 80;
       if (player.character.health >= 100) {

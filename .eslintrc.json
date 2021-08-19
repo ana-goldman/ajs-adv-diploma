@@ -1,20 +1,27 @@
 {
     "env": {
         "browser": true,
-        "es2021": true
+        "es6": true,
+        "jest": true
     },
-    "extends": [
-        "airbnb-base"
-    ],
+    "extends": "airbnb-base",
     "parserOptions": {
-        "ecmaVersion": 12,
+        "ecmaVersion": 7,
         "sourceType": "module"
     },
     "rules": {
-        "max-classes-per-file": ["error", 10],
+        "no-restricted-syntax": [
+            "error",
+            "LabeledStatement",
+            "WithStatement"
+        ],
+        "max-classes-per-file": ["error", 20],
         "no-use-before-define": ["error", { "functions": false, "classes": false }],
         "no-param-reassign": 0,
         "no-alert": "off",
-        "max-len": ["error", { "code": 250 }]
-    }
+        "max-len": ["error", { "code": 250 }],
+        "import/no-named-as-default": 0,
+        "no-new": 0
+    },
+    "parser": "babel-eslint"
 }

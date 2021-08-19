@@ -1,4 +1,3 @@
-// import { Bowman, Swordsman, Magician, Vampire, Undead, Daemon } from './Players';
 import { playerTeam, computerTeam } from './Team';
 import PositionedCharacter from './PositionedCharacter';
 /**
@@ -23,9 +22,15 @@ export function generateTeam(allowedTypes, maxLevel, characterCount, team) {
     const character = characterGenerator(allowedTypes, maxLevel).next();
     if (team === playerTeam) {
       const position = definePosition(playerTeam)[getRandom(16)];
+      // playerTeam.team.forEach((char) => {
+      //   if (char.position === position) position = definePosition(playerTeam)[getRandom(16)];
+      // });
       playerTeam.team.push(new PositionedCharacter(character.value, position));
     } else {
       const position = definePosition(computerTeam)[getRandom(16)];
+      // computerTeam.team.forEach((char) => {
+      //   if (char.position === position) position = definePosition(playerTeam)[getRandom(16)];
+      // });
       computerTeam.team.push(new PositionedCharacter(character.value, position));
     }
   }
