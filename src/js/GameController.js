@@ -9,6 +9,7 @@ import { playerTeam, computerTeam } from './Team';
 import { generateTeam } from './generators';
 import GameState from './GameState';
 import GamePlay from './GamePlay';
+import cursors from './cursors';
 
 export default class GameController {
   constructor(gamePlay, stateService) {
@@ -157,6 +158,8 @@ export default class GameController {
         }
       } else if (this.selectedPlayer === undefined) {
         GamePlay.showError('Pay attention! This is not your character');
+      } else if (this.gamePlay.boardEl.style.cursor === cursors.notallowed) {
+        GamePlay.showError('Pay attention! This character is too far to attack!');
       } else { // атака
         const target = computerTeam.team.find((element) => element.position === index);
         if (this.gamePlay.getPossibleMove(this.selectedIndex, this.selectedPlayer.character.attackRadius).includes(index)) {
